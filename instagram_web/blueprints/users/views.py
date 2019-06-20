@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, Blueprint, flash
 from models.user import User
+from models.following import Following
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import current_user, login_user
 from instagram_web.util.helpers import upload_file_to_s3
@@ -30,7 +31,13 @@ def create():
 @users_blueprint.route('/<username>', methods=["GET"])
 def show(username):
     user = User.get_or_none(User.username == username)
-    return render_template('users/profile.html', user = user)
+    find_follow = Following.get_or_none((Following.user_id == user.id) & (Following.follower_id == current_user.id) & (Following.approved))
+    is_following = False
+    if find_follow != None:
+        is_following = True
+    # if planning to show follower and following list, should change the above query and pass the results into template as lists
+    # whiteboard note: User.select().join(Following, on=(User.id == Following.follower_id).where(Following.user_id==user.id))
+    return render_template('users/profile.html', user = user, is_following=is_following)
 
 @users_blueprint.route('/profile', methods=["GET"])
 def own_profile():
