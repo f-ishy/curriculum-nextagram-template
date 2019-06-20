@@ -31,10 +31,12 @@ def create():
 @users_blueprint.route('/<username>', methods=["GET"])
 def show(username):
     user = User.get_or_none(User.username == username)
-    find_follow = Following.get_or_none((Following.user_id == user.id) & (Following.follower_id == current_user.id))
-    is_following=False
-    if find_follow != None and find_follow.approved:
+    find_follow = Following.get_or_none((Following.user_id == user.id) & (Following.follower_id == current_user.id) & (Following.approved))
+    is_following = False
+    if find_follow != None:
         is_following = True
+    # if planning to show follower and following list, should change the above query and pass the results into template as lists
+    # whiteboard note: User.select().join(Following, on=(User.id == Following.follower_id).where(Following.user_id==user.id))
     return render_template('users/profile.html', user = user, is_following=is_following)
 
 @users_blueprint.route('/profile', methods=["GET"])

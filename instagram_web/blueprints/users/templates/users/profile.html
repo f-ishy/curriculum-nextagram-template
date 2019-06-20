@@ -35,7 +35,7 @@
             </form>
         {%endif%}
     {%endif%}
-    {%if user.id == current_user.id or not user.is_private %}
+    {%if user.id == current_user.id or not user.is_private or is_following %}
         {%for post in user.posts%}
             <img src={{post.post_url}} width='200px'>
         {%endfor%}
