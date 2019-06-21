@@ -25,6 +25,5 @@ def create(id):
 def destroy(id):
     user = User.get_or_none(User.id == id)
     f = Following.get_or_none((Following.user_id==user.id) & (Following.follower_id==current_user.id))
-    f.approved = False
-    f.save()
+    f.delete_instance()
     return redirect(url_for('users.show', username = user.username))

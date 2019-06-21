@@ -1,5 +1,17 @@
 import boto3, botocore
 from app import app
+import braintree
+
+gateway = braintree.BraintreeGateway(
+    braintree.Configuration(
+        braintree.Environment.Sandbox,
+        merchant_id="3h688n4h82dm4xr5",
+        public_key="trm6prd5yhgdnn3q",
+        private_key="dd31634003d5e5df1932e22f8a34eb45"
+    )
+)
+
+client_token = gateway.client_token.generate({})
 
 s3 = boto3.client(
    "s3",
@@ -27,3 +39,4 @@ def upload_file_to_s3(file, bucket_name, filename, acl="public-read"):
         return e
 
     return "{}{}".format(app.config["S3_LOCATION"], filename)
+
