@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+        <meta content="utf-8" http-equiv="encoding">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <link rel="shortcut icon" href="{{ url_for('static', filename='image/favicon.ico') }}">
+
+        {% assets "home_css" %}
+        <link rel="stylesheet" href="{{ ASSET_URL }}">
+        {% endassets %}
+
+        {% assets "home_js" %}
+        <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+        {% endassets %}
+
+        <script src="https://js.braintreegateway.com/web/dropin/1.18.0/js/dropin.min.js"></script>
+
+        {% block header %}
+        {% endblock %}
+
+        <title>
+            {% block title %}
+            {% endblock %}
+        </title>
+    </head>
+
+<body style="text-align:center">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <form name="payment" id="payment" action="{{url_for('donate.create')}}" method="POST">
+        <input type='hidden' name='csrf_token' value = "{{csrf_token()}}"/>
+        <input type="hidden" id='payment_method_nonce' name="payment_method_nonce"/>
+        <input type="hidden" value="{{receiver_id}}" name="receiver_id">
+        <input name="amount" type="number"/>
+        <div class="container" id="dropin-container" style="width:300px"></div>
+        <button id="donate-button" class="btn btn-success">Donate</button>
+    </form>
+</body>
+
+<script>
+    var button = document.querySelector('#donate-button');
+
+    braintree.dropin.create({
+        authorization: "{{client_token}}",
+        container: '#dropin-container'
+    }, function (createErr, instance) {
+        console.log(createErr)
+        button.addEventListener('click', function (e) {
+            // need to preventDefault otherwise the form submits before the nonce value gets added
+            e.preventDefault()
+            instance.requestPaymentMethod(function (err, payload) {
+                payment.payment_method_nonce.value=payload.nonce
+                // Submit payload.nonce to your server
+                // Since preventDefault stopped the submission, call the submit function again
+                payment.submit()
+            });
+        });
+    });
+</script>
+
+</html>
