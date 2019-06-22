@@ -37,6 +37,7 @@
       </form>
       <a href="{{url_for('posts.new')}}">Make a new post</a>
     {%else%}
+      <!-- Sign in button -->
       <h1>Not logged in</h1>
       <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#signInModal">
         Sign in
@@ -68,6 +69,7 @@
                 <button type="submit" class="btn btn-primary">Sign In</button>
               </div>
             </form>
+              <a style="background-image: '../static/images/signin-button.png';" href="{{url_for('users.google_login')}}" alt="Login with google">Hello</a>
           </div>
         </div>
       </div>

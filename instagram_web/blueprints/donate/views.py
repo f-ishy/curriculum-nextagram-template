@@ -16,7 +16,7 @@ def new(receiver_id):
 @donate_blueprint.route("/checkout", methods=["POST"])
 def create():
     nonce_from_the_client = request.form["payment_method_nonce"]
-    sender_id = current_user.id
+    sender_id = current_user.id or None
     receiver_id = request.form['receiver_id']
     amount = request.form["amount"]
     result = gateway.transaction.sale({
