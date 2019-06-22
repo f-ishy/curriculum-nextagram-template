@@ -5,6 +5,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import current_user, login_user
 from instagram_web.util.helpers import upload_file_to_s3
 from app import app
+from instagram_web.util.google_oauth import oauth
+import os
 
 users_blueprint = Blueprint('users',
                             __name__,
@@ -31,10 +33,11 @@ def create():
 @users_blueprint.route('/<username>', methods=["GET"])
 def show(username):
     user = User.get_or_none(User.username == username)
-    find_follow = Following.get_or_none((Following.user_id == user.id) & (Following.follower_id == current_user.id) & (Following.approved))
     is_following = False
-    if find_follow != None:
-        is_following = True
+    if current_user.is_authenticated:
+        find_follow = Following.get_or_none((Following.user_id == user.id) & (Following.follower_id == current_user.id) & (Following.approved))
+        if find_follow != None:
+            is_following = True
     # if planning to show follower and following list, should change the above query and pass the results into template as lists
     # whiteboard note: User.select().join(Following, on=(User.id == Following.follower_id).where(Following.user_id==user.id))
     return render_template('users/profile.html', user = user, is_following=is_following)
@@ -45,8 +48,11 @@ def own_profile():
 
 @users_blueprint.route('/', methods=['POST'])
 def signin():
-        email = request.form['email']
-        password = request.form['password']
+        if password:
+            email = request.form['email']
+            password = request.form['password']
+        else:
+            email=email
         u = User.get_or_none(User.email == email)
         if u != None:
                 flash(f'User found {u.username}')
@@ -142,3 +148,24 @@ def make_private():
     current_user.is_private=True
     current_user.save()
     return redirect(url_for('users.own_profile'))
+
+@users_blueprint.route('/google_login')
+def google_login():
+    redirect_uri = url_for('users.authorize', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+@users_blueprint.route('/authorize')
+def authorize():
+    oauth.google.authorize_access_token()
+    email = oauth.google.get('https://www.googleapis.com/oauth2/v2/userinfo').json()['email']
+    u=User.get_or_none(User.email == email)
+    if u:
+        login_user(u)
+    else:
+        #password is randomized, but if the user wants to change their password and login normally...
+        #better email them to let them know their password
+        u = User(username = email, email=email, password=generate_password_hash(str(os.urandom(12))))
+        u.save()
+        login_user(u)
+    return redirect(url_for('users.index'))
+    #use the email to signup. or if the user exists, sign in with that email

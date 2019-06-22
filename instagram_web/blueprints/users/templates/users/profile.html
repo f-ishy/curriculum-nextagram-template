@@ -20,7 +20,7 @@
                 <button type="submit" class="btn btn-danger">Set profile to public</button>
             </form>
         {%endif%}
-    {%else%}
+    {%elif current_user.is_authenticated%}
         {%if is_following%}
             <!-- unfollow button here -->
             <form aria-hidden="true" action="{{url_for('following.destroy', id = user.id)}}", method="POST">
