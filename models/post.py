@@ -4,7 +4,7 @@ import peewee as pw
 from models.user import User
 
 class Post(BaseModel):
-    user_id = pw.ForeignKeyField(User, backref='posts', on_delete="cascade")
+    user = pw.ForeignKeyField(User, backref='posts', on_delete="cascade")
     post_image = pw.CharField(unique=True) #this will be the filename
     #post_caption?
 

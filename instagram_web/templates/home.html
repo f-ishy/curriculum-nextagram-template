@@ -5,6 +5,19 @@
 {% block header %}
 {% endblock %}
 {% block content %}
-  <h1>Homepage</h1>
-  I really should add user pictures here.
+  <div class="mt-5 container" >
+    {%for post in allposts%}
+      
+        <div class="row card mx-auto p-3 w-75" style="display: block;">
+            <!-- position: relative; top: 50%; left: 50%; transform: translate(-50%, -50%) -->
+          <a href="{{url_for('users.show', username=post.user.username)}}" class="card-text">{{post.user.username}}</a>
+          <img class="card-img-top" src={{post.post_url}} alt="Card image cap">
+          <div class="card-body">
+            <!-- Caption goes here -->
+          </div>
+        </div>
+        <br>
+      
+    {%endfor%}
+  </div>
 {% endblock %}

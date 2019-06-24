@@ -113,7 +113,7 @@ def dp_update():
         upload_file_to_s3(file, app.config["S3_BUCKET"], filename=str(current_user.id)+'/'+filename)
         current_user.profile_pic = filename
         current_user.save()
-        return redirect(url_for('home'))
+        return redirect(url_for('index'))
         #http://my-bucket-now.s3.amazonaws.com/Screenshot_168.png
 
     else:
@@ -159,5 +159,5 @@ def authorize():
         u = User(username = email, email=email, password=generate_password_hash(str(os.urandom(12))))
         u.save()
         login_user(u)
-    return redirect(url_for('users.index'))
+    return redirect(url_for('index'))
     #use the email to signup. or if the user exists, sign in with that email

@@ -34,9 +34,11 @@ def _db_close(exc):
 
 @app.route('/')
 def index():
+    from models.post import Post
+    allposts = Post.select().order_by(Post.created_at.desc())
     if current_user.is_authenticated:
-        return render_template('home.html')
-    return render_template('home.html')
+        return render_template('home.html', allposts=allposts)
+    return render_template('home.html', allposts=allposts)
     
 @app.route('/logout')
 @login_required
