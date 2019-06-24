@@ -11,4 +11,4 @@ class Post(BaseModel):
     @hybrid_property
     def post_url(self):
         from app import app
-        return app.config['S3_LOCATION']+str(self.user_id)+'/'+self.post_image
+        return app.config['S3_LOCATION']+str(self.user)+'/'+self.post_image

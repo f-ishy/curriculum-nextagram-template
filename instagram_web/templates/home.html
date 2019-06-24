@@ -7,17 +7,19 @@
 {% block content %}
   <div class="mt-5 container" >
     {%for post in allposts%}
-      
-        <div class="row card mx-auto p-3 w-75" style="display: block;">
+      <!-- {%if not post.user.is_private%} -->
+        <div class="row card mx-auto w-50" style="display: block;">
             <!-- position: relative; top: 50%; left: 50%; transform: translate(-50%, -50%) -->
-          <a href="{{url_for('users.show', username=post.user.username)}}" class="card-text">{{post.user.username}}</a>
+          <a href="{{url_for('users.show', username=post.user.username)}}" class="card-text pr-3 pb-3 "><img src={{post.user.profile_image_url}} style="border: 1px solid black; border-radius: 50%; width:40px; height: 40px; margin: 0.5rem; object-fit: contain">
+            {{post.user.username}}
+          </a>
           <img class="card-img-top" src={{post.post_url}} alt="Card image cap">
           <div class="card-body">
             <!-- Caption goes here -->
           </div>
         </div>
         <br>
-      
+      <!-- {%endif%} -->
     {%endfor%}
   </div>
 {% endblock %}

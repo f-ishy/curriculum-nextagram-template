@@ -26,3 +26,20 @@ class User(BaseModel, UserMixin):
             self.errors.append('Username not unique')
         if duplicate_email and not duplicate_email.id == self.id:
             self.errors.append('Email not unique')
+
+    def following(self):
+        from models.following import Following
+        return (User
+                .select()
+                .join(Following, on=Following.user)
+                .where(Following.follower == self)
+                )
+                
+    def followers(self):
+        from models.following import Following
+        return(
+            User
+                .select()
+                .join(Following, on=Following.follower)
+                .where(Following.user == self)
+        )
