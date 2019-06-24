@@ -7,6 +7,9 @@
 {% block content %}
     <h1>{{user.username}}'s Profile</h1>
     <img src={{user.profile_image_url}} width='300px'>
+    <!-- show follower count -->
+    Following: {{followingcount}}
+    Followers: {{followercount}}
     {% if user.id == current_user.id %}
         <!-- The following only shows when the user logged in is viewing their own profile -->
         {%if not current_user.is_private%}

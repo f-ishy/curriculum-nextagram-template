@@ -33,6 +33,8 @@ def create():
 @users_blueprint.route('/<username>', methods=["GET"])
 def show(username):
     user = User.get_or_none(User.username == username)
+    followercount = Following.select().where(Following.user_id == user.id, Following.approved).count()
+    followingcount = Following.select().where(Following.follower_id == user.id, Following.approved).count()
     is_following = False
     if current_user.is_authenticated:
         find_follow = Following.get_or_none((Following.user_id == user.id) & (Following.follower_id == current_user.id) & (Following.approved))
@@ -40,32 +42,22 @@ def show(username):
             is_following = True
     # if planning to show follower and following list, should change the above query and pass the results into template as lists
     # whiteboard note: User.select().join(Following, on=(User.id == Following.follower_id).where(Following.user_id==user.id))
-    return render_template('users/profile.html', user = user, is_following=is_following)
-
-@users_blueprint.route('/profile', methods=["GET"])
-def own_profile():
-    return render_template('users/profile.html', user = current_user)
+    
+    return render_template('users/profile.html', user = user, is_following=is_following, followingcount=followingcount, followercount=followercount)
 
 @users_blueprint.route('/', methods=['POST'])
 def signin():
-        if password:
-            email = request.form['email']
-            password = request.form['password']
-        else:
-            email=email
+        email = request.form['email']
+        password = request.form['password']
         u = User.get_or_none(User.email == email)
-        if u != None:
-                flash(f'User found {u.username}')
-                if check_password_hash(u.password, password):
-                        flash('Password is a match!')
-                        login_user(u)
-                        return redirect(url_for('index'))
-                else:
-                        flash('But wrong password')
-                        return render_template('home.html', email=request.form['email'])
-        else:
-                flash('No such user')
+        if check_password_hash(u.password, password):
+                login_user(u)
                 return redirect(url_for('index'))
+        else:
+                flash('But wrong password')
+                return render_template('home.html', email=request.form['email'])
+        flash('No such user')
+        return redirect(url_for('index'))
                 
 
 
@@ -96,7 +88,7 @@ def update(id):
     else:
         flash('Incorrect password')
         return redirect(url_for('users.edit'))
-    return redirect(url_for('users.own_profile'))
+    return redirect(url_for('users.show', username=current_user.username))
 
 @users_blueprint.route('/profileimage', methods=['GET'])
 def dp_edit():
@@ -141,13 +133,13 @@ def dp_update():
 def make_public():
     current_user.is_private=False
     current_user.save()
-    return redirect(url_for('users.own_profile'))
+    return redirect(url_for('users.show', username=current_user.username))
 
 @users_blueprint.route('/make_private', methods=['POST'])
 def make_private():
     current_user.is_private=True
     current_user.save()
-    return redirect(url_for('users.own_profile'))
+    return redirect(url_for('users.show', username=current_user.username))
 
 @users_blueprint.route('/google_login')
 def google_login():
