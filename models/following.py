@@ -3,6 +3,6 @@ import peewee as pw
 from models.user import User
 
 class Following(BaseModel):
-    user_id = pw.ForeignKeyField(User, backref='idols', on_delete="cascade")
-    follower_id = pw.ForeignKeyField(User, backref='followers', on_delete="cascade")
+    user = pw.ForeignKeyField(User, backref='to_user', on_delete="cascade")
+    follower = pw.ForeignKeyField(User, backref='from_user', on_delete="cascade")
     approved = pw.BooleanField(default=True)

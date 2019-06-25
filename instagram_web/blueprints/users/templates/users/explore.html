@@ -1,0 +1,17 @@
+{% extends "_layout.html" %}
+{% block title %}
+  Explore users
+{% endblock %}
+{% block header %}
+{% endblock %}
+{% block content %}
+    <div class="container-fluid mt-5 col-md-6" >
+        {%for post in allposts%}
+            <div class="mx-auto d-inline col-md-3 p-0">
+                <a href="{{url_for('users.show', username=post.user.username)}}">
+                    <img class="" src={{post.post_url}} style="width: 10rem; height: 10rem; object-fit: cover;" alt="">
+                </a>
+            </div>
+        {%endfor%}
+    </div>
+{% endblock %}

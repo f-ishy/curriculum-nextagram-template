@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, Blueprint, flash
 from models.user import User
 from models.following import Following
+from models.post import Post
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import current_user, login_user
 from instagram_web.util.helpers import upload_file_to_s3
@@ -24,15 +25,16 @@ def create():
         return render_template('users/new.html', username=request.form['username'], email=request.form['email'])
     u = User(username = request.form['username'], email = request.form['email'], password = generate_password_hash(request.form['password']))
     if u.save():
-        flash('New user created')
         login_user(u)
-        return redirect(url_for('users.new'))
+        return redirect(url_for('users.index'))
     else:
         return render_template('users/new.html', username=request.form['username'], email=request.form['email'])
 
 @users_blueprint.route('/<username>', methods=["GET"])
 def show(username):
     user = User.get_or_none(User.username == username)
+    followercount = Following.select().where(Following.user_id == user.id, Following.approved).count()
+    followingcount = Following.select().where(Following.follower_id == user.id, Following.approved).count()
     is_following = False
     if current_user.is_authenticated:
         find_follow = Following.get_or_none((Following.user_id == user.id) & (Following.follower_id == current_user.id) & (Following.approved))
@@ -40,38 +42,40 @@ def show(username):
             is_following = True
     # if planning to show follower and following list, should change the above query and pass the results into template as lists
     # whiteboard note: User.select().join(Following, on=(User.id == Following.follower_id).where(Following.user_id==user.id))
-    return render_template('users/profile.html', user = user, is_following=is_following)
-
-@users_blueprint.route('/profile', methods=["GET"])
-def own_profile():
-    return render_template('users/profile.html', user = current_user)
+    
+    return render_template('users/profile.html', user = user, is_following=is_following, followingcount=followingcount, followercount=followercount)
 
 @users_blueprint.route('/', methods=['POST'])
 def signin():
-        if password:
-            email = request.form['email']
-            password = request.form['password']
-        else:
-            email=email
+        email = request.form['email']
+        password = request.form['password']
         u = User.get_or_none(User.email == email)
-        if u != None:
-                flash(f'User found {u.username}')
-                if check_password_hash(u.password, password):
-                        flash('Password is a match!')
-                        login_user(u)
-                        return redirect(url_for('index'))
-                else:
-                        flash('But wrong password')
-                        return render_template('home.html', email=request.form['email'])
-        else:
-                flash('No such user')
+        if check_password_hash(u.password, password):
+                login_user(u)
                 return redirect(url_for('index'))
+        else:
+                flash('But wrong password')
+                return render_template('home.html', email=request.form['email'])
+        flash('No such user')
+        return redirect(url_for('index'))
                 
 
 
 @users_blueprint.route('/', methods=["GET"])
 def index():
-    return render_template('home.html') #could be explore users though?
+    if current_user.is_authenticated:
+        allposts = Post.select().join(User).where(
+            (Post.user_id.not_in(current_user.following()))
+            & 
+            ~(Post.user.is_private)
+            &
+            (Post.user != current_user.id)).order_by(
+                Post.created_at.desc())
+        return render_template('users/explore.html', allposts=allposts)
+    allposts = Post.select().join(User).where(~User.is_private).order_by(Post.created_at.desc())
+    return render_template('users/explore.html', allposts=allposts)
+
+    # return render_template('users.explore.html') #could be explore users though?
 
 
 @users_blueprint.route('/edit', methods=['GET'])
@@ -96,7 +100,7 @@ def update(id):
     else:
         flash('Incorrect password')
         return redirect(url_for('users.edit'))
-    return redirect(url_for('users.own_profile'))
+    return redirect(url_for('users.show', username=current_user.username))
 
 @users_blueprint.route('/profileimage', methods=['GET'])
 def dp_edit():
@@ -121,7 +125,7 @@ def dp_update():
         upload_file_to_s3(file, app.config["S3_BUCKET"], filename=str(current_user.id)+'/'+filename)
         current_user.profile_pic = filename
         current_user.save()
-        return redirect(url_for('home'))
+        return redirect(url_for('index'))
         #http://my-bucket-now.s3.amazonaws.com/Screenshot_168.png
 
     else:
@@ -141,13 +145,13 @@ def dp_update():
 def make_public():
     current_user.is_private=False
     current_user.save()
-    return redirect(url_for('users.own_profile'))
+    return redirect(url_for('users.show', username=current_user.username))
 
 @users_blueprint.route('/make_private', methods=['POST'])
 def make_private():
     current_user.is_private=True
     current_user.save()
-    return redirect(url_for('users.own_profile'))
+    return redirect(url_for('users.show', username=current_user.username))
 
 @users_blueprint.route('/google_login')
 def google_login():
@@ -167,5 +171,5 @@ def authorize():
         u = User(username = email, email=email, password=generate_password_hash(str(os.urandom(12))))
         u.save()
         login_user(u)
-    return redirect(url_for('users.index'))
+    return redirect(url_for('index'))
     #use the email to signup. or if the user exists, sign in with that email

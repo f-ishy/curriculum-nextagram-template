@@ -3,6 +3,8 @@ import config
 from flask import Flask, session, redirect, url_for, escape, request, render_template
 from models.base_model import db
 from models.user import User
+from models.post import Post
+from models.following import Following
 from flask_wtf.csrf import CSRFProtect
 from flask_login import login_required, LoginManager, logout_user, current_user
 
@@ -35,8 +37,16 @@ def _db_close(exc):
 @app.route('/')
 def index():
     if current_user.is_authenticated:
-        return render_template('home.html')
-    return render_template('home.html')
+        allposts = Post.select().join(User).where((Post.user_id.in_(current_user.following()) | (Post.user_id == current_user.id))).order_by(Post.created_at.desc())
+        return render_template('home.html', allposts=allposts)
+    allposts = Post.select().join(User).where(~User.is_private).order_by(Post.created_at.desc())
+    # return render_template('home.html', allposts=allposts)
+    return redirect(url_for('users.index'))
+
+@app.route('/secret')
+def showall():
+    allposts = Post.select().order_by(Post.created_at.desc())
+    return render_template('users/explore.html', allposts=allposts)
     
 @app.route('/logout')
 @login_required
