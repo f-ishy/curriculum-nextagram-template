@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, Blueprint, flash
 from models.user import User
 from models.following import Following
+from models.post import Post
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import current_user, login_user
 from instagram_web.util.helpers import upload_file_to_s3
@@ -24,9 +25,8 @@ def create():
         return render_template('users/new.html', username=request.form['username'], email=request.form['email'])
     u = User(username = request.form['username'], email = request.form['email'], password = generate_password_hash(request.form['password']))
     if u.save():
-        flash('New user created')
         login_user(u)
-        return redirect(url_for('users.new'))
+        return redirect(url_for('users.index'))
     else:
         return render_template('users/new.html', username=request.form['username'], email=request.form['email'])
 
@@ -63,7 +63,19 @@ def signin():
 
 @users_blueprint.route('/', methods=["GET"])
 def index():
-    return render_template('home.html') #could be explore users though?
+    if current_user.is_authenticated:
+        allposts = Post.select().join(User).where(
+            (Post.user_id.not_in(current_user.following()))
+            & 
+            ~(Post.user.is_private)
+            &
+            (Post.user != current_user.id)).order_by(
+                Post.created_at.desc())
+        return render_template('users/explore.html', allposts=allposts)
+    allposts = Post.select().join(User).where(~User.is_private).order_by(Post.created_at.desc())
+    return render_template('users/explore.html', allposts=allposts)
+
+    # return render_template('users.explore.html') #could be explore users though?
 
 
 @users_blueprint.route('/edit', methods=['GET'])

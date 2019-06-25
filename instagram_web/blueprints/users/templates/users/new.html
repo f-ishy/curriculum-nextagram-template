@@ -2,7 +2,6 @@
 
 {% block content %}
 <h1>CREATE NEW USER</h1>
-<h1>WOLOLO</h1>
 
 <form action="{{url_for('users.create')}}" method="POST">
     <input type='hidden' name='csrf_token' value = "{{csrf_token()}}"/>

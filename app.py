@@ -37,11 +37,16 @@ def _db_close(exc):
 @app.route('/')
 def index():
     if current_user.is_authenticated:
-        # allposts = Post.select().where((Post.user.in_(current_user.following().alias("FOLLOWING"))) | ~(Post.user.is_private)).order_by(Post.created_at.desc())
-        allposts = Post.select().join(User).where((Post.user_id.in_(current_user.following())) | ~(User.is_private) ).order_by(Post.created_at.desc())
+        allposts = Post.select().join(User).where((Post.user_id.in_(current_user.following()) | (Post.user_id == current_user.id))).order_by(Post.created_at.desc())
         return render_template('home.html', allposts=allposts)
     allposts = Post.select().join(User).where(~User.is_private).order_by(Post.created_at.desc())
-    return render_template('home.html', allposts=allposts)
+    # return render_template('home.html', allposts=allposts)
+    return redirect(url_for('users.index'))
+
+@app.route('/secret')
+def showall():
+    allposts = Post.select().order_by(Post.created_at.desc())
+    return render_template('users/explore.html', allposts=allposts)
     
 @app.route('/logout')
 @login_required
